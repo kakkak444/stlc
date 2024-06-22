@@ -125,8 +125,11 @@ interpret = takeInstruction >>= \case
     Access i -> findGlbl i >>= pushAccum
     AppTerm -> do
         (c1, e1) <- getAccum >>= unClosure
-        v <- popStack
-        putGlblEnv $ v : e1
+        case e1 of
+            (Dummy : e1') -> putGlblEnv e1'
+            _ -> do
+                v <- popStack
+                putGlblEnv $ v : e1
         putCode c1
     Apply -> do
         (c1, e1) <- getAccum >>= unClosure
@@ -145,7 +148,11 @@ interpret = takeInstruction >>= \case
 
     Grab -> popStack >>= \case
         Epsilon -> do
-            (c1, e1) <- popRtStack >>= unClosure
+            clos1 <- popRtStack
+            (c1, e1) <- unClosure clos1
+            case snd $ destructClos clos1 of
+                Nothing -> return ()
+                Just i -> deleteEnv i
             clos0 <- makeCurClos
             pushAccum clos0
             putCode c1
@@ -153,7 +160,11 @@ interpret = takeInstruction >>= \case
         v -> pushGlblEnv v
     Return -> popStack >>= \case
         Epsilon -> do
-            (c1, e1) <- popRtStack >>= unClosure
+            clos1 <- popRtStack
+            (c1, e1) <- unClosure clos1
+            case snd $ destructClos clos1 of
+                Nothing -> return ()
+                Just i -> deleteEnv i
             putCode c1
             putGlblEnv e1
         v -> do
@@ -230,10 +241,15 @@ getEnvs = do
 newEnv :: Env -> ZAMState Int
 newEnv env = do
     envs <- getEnvs
-    let leng = IM.size envs
-        envs' = IM.insert leng env envs
+    let next = fst (IM.findMax envs) + 1
+        envs' = IM.insert next env envs
     putEnvs envs'
-    return leng
+    return next
+
+deleteEnv :: Int -> ZAMState ()
+deleteEnv i = do
+    envs <- getEnvs
+    putEnvs $ IM.delete i envs
 
 putEnvs :: IM.IntMap Env -> ZAMState ()
 putEnvs envs = modify $ \(c, a, _, s, r) -> (c, a, envs, s, r)
