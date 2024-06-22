@@ -1,2 +1,5 @@
+import Test.Hspec (hspec)
+import qualified CoreToZincSpec as CTZ
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = hspec CTZ.spec

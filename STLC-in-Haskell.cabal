@@ -25,7 +25,14 @@ source-repository head
 
 library
   exposed-modules:
+      Core
+      Core.Expr
+      Core.TypeCheck
+      Core.Types
+      CoreToZINC
       Lib
+      ZINC
+      ZINCInterpreter
   other-modules:
       Paths_STLC_in_Haskell
   hs-source-dirs:
@@ -33,6 +40,8 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , containers ==0.6.*
+    , mtl ==2.3.*
   default-language: Haskell2010
 
 executable STLC-in-Haskell-exe
@@ -45,12 +54,15 @@ executable STLC-in-Haskell-exe
   build-depends:
       STLC-in-Haskell
     , base >=4.7 && <5
+    , containers ==0.6.*
+    , mtl ==2.3.*
   default-language: Haskell2010
 
 test-suite STLC-in-Haskell-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      CoreToZincSpec
       Paths_STLC_in_Haskell
   hs-source-dirs:
       test
@@ -58,4 +70,7 @@ test-suite STLC-in-Haskell-test
   build-depends:
       STLC-in-Haskell
     , base >=4.7 && <5
+    , containers ==0.6.*
+    , hspec
+    , mtl ==2.3.*
   default-language: Haskell2010

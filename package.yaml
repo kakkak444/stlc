@@ -20,6 +20,8 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
+- mtl  == 2.3.*
+- containers == 0.6.*
 
 ghc-options:
 - -Wall
@@ -56,3 +58,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - STLC-in-Haskell
+    - hspec
