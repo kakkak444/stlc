@@ -5,7 +5,8 @@ module ZINC
     ) where
 
 data Instruction
-    = Access Integer
+    = Access Int
+    | AccessGlbl Int
     | AppTerm
     | Apply
     | Push

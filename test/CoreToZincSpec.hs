@@ -62,12 +62,12 @@ spec = do
 
 runZAM'' :: Code -> Value
 runZAM'' c =
-    let (_, a, _, _, _) = runZAM' c
+    let (_, a, _, _, _, _) = runZAM' c
     in
         fromJust a
 
-runZAM' :: Code -> (Code, Accum, IM.IntMap Env, Stack, RetStack)
-runZAM' c = runZAM (c, Nothing, env, [], [])
+runZAM' :: Code -> (Code, Accum, IM.IntMap Env, Stack, RetStack, Glbl)
+runZAM' c = runZAM (c, Nothing, [], [], [], global)
 
 core :: Expr
 core =
@@ -171,8 +171,8 @@ zinc' = coreToZinc (map mkId ["==", "+", "-"]) [core']
 zinc'' :: Code
 zinc'' = coreToZinc (map mkId ["==", "+", "-"]) [core'']
 
-env :: Env
-env =
+global :: Glbl
+global =
     [ ClosVal [Grab, Access 0, Push, Access 1, Prim Eq, Return] Nothing
     , ClosVal [Grab, Access 0, Push, Access 1, Prim Add, Return] Nothing
     , ClosVal [Grab, Access 0, Push, Access 1, Prim Sub, Return] Nothing
@@ -199,4 +199,5 @@ tyBool = TyLit TyBool
 tyCheck :: Expr -> Bool
 tyCheck = isValidExpr tyEnv
 
+assertValidExpr :: Expr -> Expectation
 assertValidExpr expr = tyCheck expr `shouldBe` True

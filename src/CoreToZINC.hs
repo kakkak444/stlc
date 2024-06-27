@@ -10,18 +10,26 @@ import ZINC as Z
 
 import Data.List (elemIndex)
 import Data.Maybe
+import Data.Bifunctor
 import Control.Monad.Reader
 
-type Env = [Id]
+type Globl = [Id]
+type Env = ([Id], Globl)
 
-coreToZinc :: [Id] -> [Expr] -> Code
-coreToZinc env progs = flip runReader env $ concat <$> mapM c progs
+coreToZinc :: Globl -> [Expr] -> Code
+coreToZinc env progs = flip runReader ([], env) $ concat <$> mapM c progs
 
 c :: Expr -> Reader Env Code
 c = \case
     Var x -> do
-        n <- fromJust <$> findPos x
-        return [Access $ toInteger n]
+        -- n <- fromJust <$> findLocal x
+        -- return [Access $ toInteger n]
+        n <- findLocal x
+        case n of
+            Just n' -> return [Access n']
+            Nothing -> do
+                n' <- fromJust <$> findGlobal x
+                return [AccessGlbl n']
     App e1 eN -> do
         e1' <- flatApp e1
         eN' <- c eN
@@ -52,8 +60,8 @@ c = \case
 t :: Expr -> Reader Env Code
 t = \case
     Var x -> do
-        n <- fromJust <$> findPos x
-        return $ [Access $ toInteger n]
+        n <- fromJust <$> findLocal x
+        return $ [Access n]
     App e1 eN -> do
         e1' <- flatApp e1
         eN' <- c eN
@@ -80,11 +88,14 @@ t = \case
         e' <- c e
         return $ e' ++ [Z.Fix]
 
-findPos :: Id -> Reader Env (Maybe Int)
-findPos x = asks (elemIndex x)
+findLocal :: Id -> Reader Env (Maybe Int)
+findLocal x = asks (elemIndex x . fst)
+
+findGlobal :: Id -> Reader Env (Maybe Int)
+findGlobal x = asks (elemIndex x . snd)
 
 withNewVar :: Id -> Reader Env a -> Reader Env a
-withNewVar x = local (x:)
+withNewVar x = local $ first (x:)
 
 flatApp :: Expr -> Reader Env Code
 flatApp (App e1 e2) = do

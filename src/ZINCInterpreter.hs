@@ -3,7 +3,7 @@
 module ZINCInterpreter
     ( runZAM
     , Value(..)
-    , Env, Stack, RetStack, Accum
+    , Env, Stack, RetStack, Accum, Glbl
 
     -- debug
     , interpret
@@ -29,11 +29,12 @@ data Value
     deriving (Show)
 
 type Env = [Value]
+type Glbl = [Value]
 type Stack = [Value]
 type RetStack = [Value]
 type Accum = Maybe Value
 
-type ZAMState a = State (Code, Accum, IM.IntMap Env, Stack, RetStack) a
+type ZAMState a = State (Code, Accum, IM.IntMap Env, Stack, RetStack, Glbl) a
 
 primOps :: M.Map PrimOp (ZAMState Value)
 primOps = M.fromList
@@ -105,11 +106,11 @@ primOps = M.fromList
                 _ -> error "never come")
     ]
 
-runZAM :: (Code, Accum, Env, Stack, RetStack) -> (Code, Accum, IM.IntMap Env, Stack, RetStack)
-runZAM (c, a, e, s, r) =
-    let (c', a', e', s', r') = execState helper (c, a, IM.singleton 0 e, s, r)
+runZAM :: (Code, Accum, Env, Stack, RetStack, Glbl) -> (Code, Accum, IM.IntMap Env, Stack, RetStack, Glbl)
+runZAM (c, a, e, s, r, g) =
+    let (c', a', e', s', r', g') = execState helper (c, a, IM.singleton 0 e, s, r, g)
     in
-        (c', a', e', s', r')
+        (c', a', e', s', r', g')
   where
     helper :: ZAMState ()
     helper = do
@@ -117,12 +118,13 @@ runZAM (c, a, e, s, r) =
         code <- getCode
         unless (null code) helper
 
-debug :: ZAMState a -> (Code, Accum, IM.IntMap Env, Stack, RetStack) ->  (Code, Accum, IM.IntMap Env, Stack, RetStack)
+debug :: ZAMState a -> (Code, Accum, IM.IntMap Env, Stack, RetStack, Glbl) ->  (Code, Accum, IM.IntMap Env, Stack, RetStack, Glbl)
 debug = execState
 
 interpret :: ZAMState ()
 interpret = takeInstruction >>= \case
-    Access i -> findGlbl i >>= pushAccum
+    Access i -> findGlblEnv i >>= pushAccum
+    AccessGlbl i -> findGlbl i >>= pushAccum
     AppTerm -> do
         (c1, e1) <- getAccum >>= unClosure
         case e1 of
@@ -211,31 +213,36 @@ pushRtFrame = makeCurClos >>= pushRtStack
 
 getCode :: ZAMState Code
 getCode = do
-    (c, _, _, _, _) <- get
+    (c, _, _, _, _, _) <- get
     return c
 
 putCode :: Code -> ZAMState ()
-putCode c = modify $ \(_, a, e, s, r) -> (c, a, e, s, r)
+putCode c = modify $ \(_, a, e, s, r, g) -> (c, a, e, s, r, g)
 
 pushCode :: Code -> ZAMState ()
-pushCode c = modify $ \(c', a, e, s, r) -> (c ++ c', a, e, s, r)
+pushCode c = modify $ \(c', a, e, s, r, g) -> (c ++ c', a, e, s, r, g)
 
 getAccum :: ZAMState Value
 getAccum = do
-    (_, a, _, _, _) <- get
+    (_, a, _, _, _, _) <- get
     return $ fromJust a
 
 pushAccum :: Value -> ZAMState ()
-pushAccum v = modify $ \(c, _, e, s, r) -> (c, Just v, e, s, r)
+pushAccum v = modify $ \(c, _, e, s, r, g) -> (c, Just v, e, s, r, g)
+
+getGlbl :: ZAMState Glbl
+getGlbl = do
+    (_, _, _, _, _, g) <- get
+    return g
 
 getGlblEnv :: ZAMState Env
 getGlblEnv = do
-    (_, _, e, _, _) <- get
+    (_, _, e, _, _, _) <- get
     return $ e IM.! 0
 
 getEnvs :: ZAMState (IM.IntMap Env)
 getEnvs = do
-    (_, _, e, _, _) <- get
+    (_, _, e, _, _, _) <- get
     return e
 
 newEnv :: Env -> ZAMState Int
@@ -252,7 +259,7 @@ deleteEnv i = do
     putEnvs $ IM.delete i envs
 
 putEnvs :: IM.IntMap Env -> ZAMState ()
-putEnvs envs = modify $ \(c, a, _, s, r) -> (c, a, envs, s, r)
+putEnvs envs = modify $ \(c, a, _, s, r, g) -> (c, a, envs, s, r, g)
 
 pushGlblEnv :: Value -> ZAMState ()
 pushGlblEnv v = do
@@ -277,30 +284,30 @@ popGlblEnv = do
 
 getStack :: ZAMState Stack
 getStack = do
-    (_, _, _, s, _) <- get
+    (_, _, _, s, _, _) <- get
     return s
 
 pushStack :: Value -> ZAMState ()
-pushStack v = modify $ \(c, a, e, s, r) -> (c, a, e, v : s, r)
+pushStack v = modify $ \(c, a, e, s, r, g) -> (c, a, e, v : s, r, g)
 
 popStack :: ZAMState Value
 popStack = do
-    (c, a, e, s, r) <- get
-    put (c, a, e, tail s, r)
+    (c, a, e, s, r, g) <- get
+    put (c, a, e, tail s, r, g)
     return $ head s
 
 getRtStack :: ZAMState RetStack
 getRtStack = do
-    (_, _,  _, _, r) <- get
+    (_, _,  _, _, r, _) <- get
     return r
 
 pushRtStack :: Value -> ZAMState ()
-pushRtStack v = modify $ \(c, a, e, s, r) -> (c, a, e, s, v : r)
+pushRtStack v = modify $ \(c, a, e, s, r, g) -> (c, a, e, s, v : r, g)
 
 popRtStack :: ZAMState Value
 popRtStack = do
-    (c, a, e, s, r) <- get
-    put (c, a, e, s, tail r)
+    (c, a, e, s, r, g) <- get
+    put (c, a, e, s, tail r, g)
     return $ head r
 
 unClosure :: Value -> ZAMState (Code, Env)
@@ -310,13 +317,18 @@ unClosure (ClosVal c i) = do
     return (c, e)
 unClosure _ = error "unClosure: never come"
 
-findGlbl :: Integer -> ZAMState Value
-findGlbl i = do
+findGlblEnv :: Int -> ZAMState Value
+findGlblEnv i = do
     e <- getGlblEnv
-    return $ e !! fromInteger i
+    return $ e !! i
+
+findGlbl :: Int -> ZAMState Value
+findGlbl i = do
+    g <- getGlbl
+    return $ g !! i
 
 takeInstruction :: ZAMState Instruction
 takeInstruction = do
-    (c, a, e, s, r) <- get
-    put (tail c, a, e, s, r)
+    (c, a, e, s, r, g) <- get
+    put (tail c, a, e, s, r, g)
     return $ head c
