@@ -12,7 +12,6 @@ module ZINCInterpreter
 
 import ZINC
 
-import qualified Data.Map.Strict as M
 import qualified Data.IntMap.Strict as IM
 import Data.Maybe (fromJust)
 import Control.Monad.State.Strict
@@ -36,75 +35,74 @@ type Accum = Maybe Value
 
 type ZAMState a = State (Code, Accum, IM.IntMap Env, Stack, RetStack, Glbl) a
 
-primOps :: M.Map PrimOp (ZAMState Value)
-primOps = M.fromList
-    [ (Add, do
-            lhs <- getAccum
-            rhs <- popStack
-            return $ case (lhs, rhs) of
-                (IntVal l, IntVal r) -> IntVal $ l + r
-                (DoubleVal l, DoubleVal r) -> DoubleVal $ l + r
-                _ -> error "never come")
-    , (Sub, do
-            lhs <- getAccum
-            rhs <- popStack
-            return $ case (lhs, rhs) of
-                (IntVal l, IntVal r) -> IntVal $ l - r
-                (DoubleVal l, DoubleVal r) -> DoubleVal $ l - r
-                _ -> error "never come")
-    , (Mul, do
-            lhs <- getAccum
-            rhs <- popStack
-            return $ case (lhs, rhs) of
-                (IntVal l, IntVal r) -> IntVal $ l * r
-                (DoubleVal l, DoubleVal r) -> DoubleVal $ l * r
-                _ -> error "never come")
-    , (Div, do
-            lhs <- getAccum
-            rhs <- popStack
-            return $ case (lhs, rhs) of
-                (IntVal l, IntVal r) -> IntVal $ l `div` r
-                (DoubleVal l, DoubleVal r) -> DoubleVal $ l / r
-                _ -> error "never come")
+primOps :: PrimOp -> ZAMState Value
+primOps = \case
+    Add -> do
+        lhs <- getAccum
+        rhs <- popStack
+        return $ case (lhs, rhs) of
+            (IntVal l, IntVal r) -> IntVal $ l + r
+            (DoubleVal l, DoubleVal r) -> DoubleVal $ l + r
+            _ -> error "never come"
+    Sub -> do
+        lhs <- getAccum
+        rhs <- popStack
+        return $ case (lhs, rhs) of
+            (IntVal l, IntVal r) -> IntVal $ l - r
+            (DoubleVal l, DoubleVal r) -> DoubleVal $ l - r
+            _ -> error "never come"
+    Mul -> do
+        lhs <- getAccum
+        rhs <- popStack
+        return $ case (lhs, rhs) of
+            (IntVal l, IntVal r) -> IntVal $ l * r
+            (DoubleVal l, DoubleVal r) -> DoubleVal $ l * r
+            _ -> error "never come"
+    Div -> do
+        lhs <- getAccum
+        rhs <- popStack
+        return $ case (lhs, rhs) of
+            (IntVal l, IntVal r) -> IntVal $ l `div` r
+            (DoubleVal l, DoubleVal r) -> DoubleVal $ l / r
+            _ -> error "never come"
 
-    , (Eq, do
-            lhs <- getAccum
-            rhs <- popStack
-            return $ case (lhs, rhs) of
-                (IntVal l, IntVal r) -> BoolVal $ l == r
-                (DoubleVal l, DoubleVal r) -> BoolVal $ l == r
-                (BoolVal l, BoolVal r) -> BoolVal $ l == r
-                (UnitVal, UnitVal) -> BoolVal True
-                _ -> error "never come")
-    , (Lt, do
-            lhs <- getAccum
-            rhs <- popStack
-            return $ case (lhs, rhs) of
-                (IntVal l, IntVal r) -> BoolVal $ l < r
-                (DoubleVal l, DoubleVal r) -> BoolVal $ l < r
-                _ -> error "never come")
-    , (Gt, do
-            lhs <- getAccum
-            rhs <- popStack
-            return $ case (lhs, rhs) of
-                (IntVal l, IntVal r) -> BoolVal $ l > r
-                (DoubleVal l, DoubleVal r) -> BoolVal $ l > r
-                _ -> error "never come")
-    , (Le, do
-            lhs <- getAccum
-            rhs <- popStack
-            return $ case (lhs, rhs) of
-                (IntVal l, IntVal r) -> BoolVal $ l <= r
-                (DoubleVal l, DoubleVal r) -> BoolVal $ l <= r
-                _ -> error "never come")
-    , (Ge, do
-            lhs <- getAccum
-            rhs <- popStack
-            return $ case (lhs, rhs) of
-                (IntVal l, IntVal r) -> BoolVal $ l >= r
-                (DoubleVal l, DoubleVal r) -> BoolVal $ l >= r
-                _ -> error "never come")
-    ]
+    Eq -> do
+        lhs <- getAccum
+        rhs <- popStack
+        return $ case (lhs, rhs) of
+            (IntVal l, IntVal r) -> BoolVal $ l == r
+            (DoubleVal l, DoubleVal r) -> BoolVal $ l == r
+            (BoolVal l, BoolVal r) -> BoolVal $ l == r
+            (UnitVal, UnitVal) -> BoolVal True
+            _ -> error "never come"
+    Lt -> do
+        lhs <- getAccum
+        rhs <- popStack
+        return $ case (lhs, rhs) of
+            (IntVal l, IntVal r) -> BoolVal $ l < r
+            (DoubleVal l, DoubleVal r) -> BoolVal $ l < r
+            _ -> error "never come"
+    Gt -> do
+        lhs <- getAccum
+        rhs <- popStack
+        return $ case (lhs, rhs) of
+            (IntVal l, IntVal r) -> BoolVal $ l > r
+            (DoubleVal l, DoubleVal r) -> BoolVal $ l > r
+            _ -> error "never come"
+    Le -> do
+        lhs <- getAccum
+        rhs <- popStack
+        return $ case (lhs, rhs) of
+            (IntVal l, IntVal r) -> BoolVal $ l <= r
+            (DoubleVal l, DoubleVal r) -> BoolVal $ l <= r
+            _ -> error "never come"
+    Ge -> do
+        lhs <- getAccum
+        rhs <- popStack
+        return $ case (lhs, rhs) of
+            (IntVal l, IntVal r) -> BoolVal $ l >= r
+            (DoubleVal l, DoubleVal r) -> BoolVal $ l >= r
+            _ -> error "never come"
 
 runZAM :: (Code, Accum, Env, Stack, RetStack, Glbl) -> (Code, Accum, IM.IntMap Env, Stack, RetStack, Glbl)
 runZAM (c, a, e, s, r, g) =
@@ -183,7 +181,7 @@ interpret = takeInstruction >>= \case
         BoolVal True -> pushCode c1
         BoolVal False -> pushCode c2
         _ -> error "interpret: Test: never come"
-    Prim prim -> primOps M.! prim >>= pushAccum
+    Prim prim -> primOps prim >>= pushAccum
     Fix -> do
         clos0 <- getAccum
         let (c, idx) = destructClos clos0
