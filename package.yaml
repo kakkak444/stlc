@@ -2,8 +2,8 @@ name:                STLC-in-Haskell
 version:             0.1.0.0
 github:              "githubuser/STLC-in-Haskell"
 license:             MIT
-author:              ".aic"
-copyright:           "2024 .aic"
+author:              "kakkak444"
+copyright:           "2024 kakkak444"
 
 extra-source-files:
 - README.md

@@ -9,9 +9,9 @@ version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/githubuser/STLC-in-Haskell#readme>
 homepage:       https://github.com/githubuser/STLC-in-Haskell#readme
 bug-reports:    https://github.com/githubuser/STLC-in-Haskell/issues
-author:         .aic
-maintainer:     .aic
-copyright:      2024 .aic
+author:         kakkak444
+maintainer:     kakkak444
+copyright:      2024 kakkak444
 license:        MIT
 license-file:   LICENSE
 build-type:     Simple
