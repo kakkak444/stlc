@@ -12,8 +12,7 @@ import Core.Expr
 import qualified Data.Map.Strict as M
 import Control.Monad.Reader
 import Control.Monad.Except
-
-
+import Control.Monad
 
 type TyEnv = M.Map Id Type
 
@@ -58,4 +57,13 @@ getType = \case
         case te of
             TyArrow te1 te2
                 | te1 == te2 -> return te1
+            _ -> throwError ()
+    Tuple xs -> do
+        types <- forM xs getType
+        return $ TyTuple types
+    TupleNthElem expr idx -> do
+        t <- getType expr
+        case t of
+            TyTuple ts
+                | length ts > idx -> return $ ts !! idx
             _ -> throwError ()

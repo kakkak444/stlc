@@ -42,6 +42,7 @@ mkLitUnit _ = LitUnit
 data Type
     = TyLit LitType
     | TyArrow Type Type
+    | TyTuple [Type]
     deriving (Show, Eq)
 
 data LitType

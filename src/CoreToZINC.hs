@@ -12,6 +12,7 @@ import Data.List (elemIndex)
 import Data.Maybe
 import Data.Bifunctor
 import Control.Monad.Reader
+import Control.Monad
 
 type Globl = [Id]
 type Env = ([Id], Globl)
@@ -55,6 +56,16 @@ c = \case
     C.Fix e -> do
         e' <- c e
         return $ e' ++ [Z.Fix]
+    Tuple xs -> do
+        let len = length xs
+        e' <- foldM (\acc e -> do
+                e' <- c e
+                return $ acc ++ e' ++ [Push]
+            ) [] $ reverse xs
+        return $ e' ++ [Prim $ MkTuple len]
+    C.TupleNthElem expr idx -> do
+        e' <- c expr
+        return $ e' ++ [Prim $ Z.TupleNthElem idx]
 
 
 t :: Expr -> Reader Env Code
@@ -87,6 +98,16 @@ t = \case
     C.Fix e -> do
         e' <- c e
         return $ e' ++ [Z.Fix]
+    Tuple xs -> do
+        let len = length xs
+        e' <- foldM (\acc e -> do
+                e' <- c e
+                return $ acc ++ e' ++ [Push]
+            ) [] $ reverse xs
+        return $ e' ++ [Prim $ MkTuple len]
+    C.TupleNthElem expr idx -> do
+        e' <- c expr
+        return $ e' ++ [Prim $ Z.TupleNthElem idx]
 
 findLocal :: Id -> Reader Env (Maybe Int)
 findLocal x = asks (elemIndex x . fst)

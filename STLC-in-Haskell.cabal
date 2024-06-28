@@ -31,6 +31,8 @@ library
       Core.Types
       CoreToZINC
       Lib
+      STLC.Expr
+      STLC.Types
       ZINC
       ZINCInterpreter
   other-modules:
@@ -42,6 +44,7 @@ library
       base >=4.7 && <5
     , containers ==0.6.*
     , mtl ==2.3.*
+    , vector ==0.13.*
   default-language: Haskell2010
 
 executable STLC-in-Haskell-exe
@@ -56,6 +59,7 @@ executable STLC-in-Haskell-exe
     , base >=4.7 && <5
     , containers ==0.6.*
     , mtl ==2.3.*
+    , vector ==0.13.*
   default-language: Haskell2010
 
 test-suite STLC-in-Haskell-test
@@ -73,4 +77,5 @@ test-suite STLC-in-Haskell-test
     , containers ==0.6.*
     , hspec
     , mtl ==2.3.*
+    , vector ==0.13.*
   default-language: Haskell2010

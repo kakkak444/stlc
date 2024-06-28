@@ -12,4 +12,6 @@ data Expr
     | Let (Id, Expr) Expr
     | If Expr Expr Expr
     | Fix Expr
+    | Tuple [Expr]
+    | TupleNthElem Expr Int
     deriving Show

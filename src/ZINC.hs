@@ -30,6 +30,7 @@ data PrimOp
     = Add | Sub | Mul | Div
     | Eq | Lt | Gt
     | Le | Ge
+    | TupleNthElem Int | MkTuple Int
     deriving (Show, Eq, Ord)
 
 type Code = [Instruction]

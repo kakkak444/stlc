@@ -13,6 +13,7 @@ module ZINCInterpreter
 import ZINC
 
 import qualified Data.IntMap.Strict as IM
+import qualified Data.Vector as V
 import Data.Maybe (fromJust)
 import Control.Monad.State.Strict
 import Control.Monad
@@ -22,6 +23,7 @@ data Value
     | BoolVal Bool
     | DoubleVal Rational
     | UnitVal
+    | TupleVal (V.Vector Value)
     | ClosVal Code (Maybe Int)
     | Epsilon
     | Dummy
@@ -102,6 +104,14 @@ primOps = \case
         return $ case (lhs, rhs) of
             (IntVal l, IntVal r) -> BoolVal $ l >= r
             (DoubleVal l, DoubleVal r) -> BoolVal $ l >= r
+            _ -> error "never come"
+    MkTuple len -> do
+        elems <- replicateM len popStack
+        return $ TupleVal $ V.fromListN len elems
+    TupleNthElem idx -> do
+        tuple <- getAccum
+        case tuple of
+            TupleVal tuple' -> return $ tuple' V.! idx
             _ -> error "never come"
 
 runZAM :: (Code, Accum, Env, Stack, RetStack, Glbl) -> (Code, Accum, IM.IntMap Env, Stack, RetStack, Glbl)
