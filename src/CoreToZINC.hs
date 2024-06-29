@@ -23,14 +23,14 @@ coreToZinc env progs = flip runReader ([], env) $ concat <$> mapM c progs
 c :: Expr -> Reader Env Code
 c = \case
     Var x -> do
-        -- n <- fromJust <$> findLocal x
-        -- return [Access $ toInteger n]
         n <- findLocal x
         case n of
             Just n' -> return [Access n']
             Nothing -> do
-                n' <- fromJust <$> findGlobal x
-                return [AccessGlbl n']
+                n' <- findGlobal x
+                case n' of
+                    Just n'' -> return [AccessGlbl n'']
+                    Nothing -> error $ "Not founded in environment `" <> show x <> "`"
     App e1 eN -> do
         e1' <- flatApp e1
         eN' <- c eN
