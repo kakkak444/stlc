@@ -60,6 +60,18 @@ spec = do
                 IntVal i -> i `shouldBe` 300
                 _ -> error "never come"
 
+        it "{ let gcd0 = \\gcd -> \\ab -> if ab.1 == 0 then ab.1 else gcd (ab.1, ab.0 % ab.1) in let gcd' = fix gcd0 in gcd' 253 644 } === 23" $ do
+            assertValidExpr gcd'
+            case runZAM'' gcd'' of
+                IntVal i -> i `shouldBe` 23
+                _ -> error "never come"
+
+        it "test mutual recursion" $ do
+            assertValidExpr evenOdd
+            case runZAM'' evenOdd' of
+                BoolVal b -> b `shouldBe` True
+                _ -> error "never come"
+
 runZAM'' :: Code -> Value
 runZAM'' c =
     let (_, a, _, _, _, _) = runZAM' c
@@ -162,6 +174,97 @@ partialApply =
 partialApply' :: Code
 partialApply' = coreToZinc env' [partialApply]
 
+gcd' :: Expr
+gcd' =
+    C.Let (
+        mkId "gcd0",
+        Lam (mkId "gcd", TyArrow (TyTuple [tyInt, tyInt]) tyInt) (
+            Lam (mkId "ab", TyTuple [tyInt, tyInt]) (
+                If ( (s2v "==" `App` C.TupleNthElem (s2v "ab") 1) `App` i2l 0 )
+                ( C.TupleNthElem (s2v "ab") 0 )
+                ( s2v "gcd" `App` Tuple [C.TupleNthElem (s2v "ab") 1, (s2v "%" `App` C.TupleNthElem (s2v "ab") 0) `App` C.TupleNthElem (s2v "ab") 1] )
+            )
+        )
+    ) ( C.Let (
+            mkId "gcd'",
+            C.Fix (s2v "gcd0")
+        ) (
+            s2v "gcd'" `App` Tuple [i2l 253, i2l 644]
+        )
+    )
+
+gcd'' :: Code
+gcd'' = coreToZinc env' [gcd']
+
+evenOdd :: Expr
+evenOdd =
+    C.Let (
+        mkId "map",
+        Lam (mkId "f", TyArrow intBoolTupleIntBool intBool ) (
+            Lam (mkId "t", TyTuple [intBoolTupleIntBool, intBoolTupleIntBool]) (
+                Tuple [ s2v "f" `App` C.TupleNthElem (s2v "t") 0, s2v "f" `App` C.TupleNthElem (s2v "t") 1 ]
+            )
+        )
+    ) ( C.Let (
+            mkId "fixPoly",
+            Lam (mkId "l", TyTuple [intBoolTupleIntBool, intBoolTupleIntBool]) (
+                C.Fix (
+                    Lam (mkId "self", TyArrow (TyTuple [intBoolTupleIntBool, intBoolTupleIntBool]) intBoolTuple) (
+                        Lam (mkId "l'", TyTuple [intBoolTupleIntBool, intBoolTupleIntBool]) (
+                            s2v "map" `App` Lam (mkId "li", intBoolTupleIntBool) (
+                                Lam (mkId "x", tyInt) (
+                                    (s2v "li" `App` (s2v "self" `App` s2v "l'")) `App` s2v "x"
+                                )
+                            ) `App` s2v "l'"
+                        )
+                    )
+                ) `App` s2v "l"
+            )
+        ) ( C.Let (
+                mkId "evenOdd'",
+                Tuple
+                    [ Lam (mkId "evenOdd0", intBoolTuple) (
+                        Lam (mkId "n0", tyInt) (
+                            If ( (s2v "==" `App` s2v "n0") `App` i2l 0 )
+                            ( b2l True )
+                            ( If ( (s2v "==" `App` s2v "n0") `App` i2l 1 )
+                              ( b2l False )
+                              ( C.TupleNthElem (s2v "evenOdd0") 1 `App` ( (s2v "-" `App` s2v "n0") `App` i2l 1 ) )
+                            )
+                        )
+                    )
+                    , Lam (mkId "evenOdd1", intBoolTuple) (
+                        Lam (mkId "n1", tyInt) (
+                            If ( (s2v "==" `App` s2v "n1") `App` i2l 0 )
+                            ( b2l False )
+                            ( If ( (s2v "==" `App` s2v "n1") `App` i2l 1 )
+                              ( b2l True )
+                              ( C.TupleNthElem (s2v "evenOdd1") 0 `App` ( (s2v "-" `App` s2v "n1") `App` i2l 1 ) )
+                            )
+                        )
+                    )
+                    ]
+            ) ( C.Let (
+                    mkId "evenOdd",
+                    s2v "fixPoly" `App` s2v "evenOdd'"
+                ) ( C.Let (
+                        mkId "even",
+                        C.TupleNthElem (s2v "evenOdd") 0
+                    ) (
+                        s2v "even" `App` i2l 100
+                    )
+                )
+            )
+        )
+    )
+  where
+    intBool = TyArrow tyInt tyBool
+    intBoolTuple = TyTuple [intBool, intBool]
+    intBoolTupleIntBool = TyArrow intBoolTuple intBool
+
+evenOdd' :: Code
+evenOdd' = coreToZinc env' [evenOdd]
+
 zinc :: Code
 zinc = coreToZinc (map mkId ["==", "+", "-"]) [core]
 
@@ -176,19 +279,32 @@ global =
     [ ClosVal [Grab, Access 0, Push, Access 1, Prim Eq, Return] Nothing
     , ClosVal [Grab, Access 0, Push, Access 1, Prim Add, Return] Nothing
     , ClosVal [Grab, Access 0, Push, Access 1, Prim Sub, Return] Nothing
+    , ClosVal [Grab, Access 0, Push, Access 1, Prim Mul, Return] Nothing
+    , ClosVal [Grab, Access 0, Push, Access 1, Prim Div, Return] Nothing
+    , ClosVal [Grab, Access 0, Push, Access 1, Prim Mod, Return] Nothing
     ]
 
 tyEnv :: TyEnv
-tyEnv = M.fromList [(mkId "==", TyArrow tyInt (TyArrow tyInt tyBool)), (mkId "+", TyArrow tyInt (TyArrow tyInt tyInt)), (mkId "-", TyArrow tyInt (TyArrow tyInt tyInt))]
+tyEnv = M.fromList
+    [ (mkId "==", TyArrow tyInt (TyArrow tyInt tyBool))
+    , (mkId "+", TyArrow tyInt (TyArrow tyInt tyInt))
+    , (mkId "-", TyArrow tyInt (TyArrow tyInt tyInt))
+    , (mkId "*", TyArrow tyInt (TyArrow tyInt tyInt))
+    , (mkId "/", TyArrow tyInt (TyArrow tyInt tyInt))
+    , (mkId "%", TyArrow tyInt (TyArrow tyInt tyInt))
+    ]
 
 env' :: [Id]
-env' = map mkId ["==", "+", "-"]
+env' = map mkId ["==", "+", "-", "*", "/", "%"]
 
 s2v :: String -> Expr
 s2v = Var . mkId
 
 i2l :: Int64 -> Expr
 i2l = Lit . mkLitInt
+
+b2l :: Bool -> Expr
+b2l = Lit . mkLitBool
 
 tyInt :: Type
 tyInt = TyLit TyInt
@@ -200,4 +316,4 @@ tyCheck :: Expr -> Bool
 tyCheck = isValidExpr tyEnv
 
 assertValidExpr :: Expr -> Expectation
-assertValidExpr expr = tyCheck expr `shouldBe` True
+assertValidExpr = (`shouldSatisfy` tyCheck)
