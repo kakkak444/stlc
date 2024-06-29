@@ -23,7 +23,9 @@ library
       Core.TypeCheck
       Core.Types
       CoreToZINC
+      InferType
       Lib
+      Rename
       STLC.Expr
       STLC.Types
       ZINC
