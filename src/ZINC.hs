@@ -27,7 +27,7 @@ data Instruction
     deriving (Show)
 
 data PrimOp
-    = Add | Sub | Mul | Div
+    = Add | Sub | Mul | Div | Mod
     | Eq | Lt | Gt
     | Le | Ge
     | TupleNthElem Int | MkTuple Int

@@ -45,28 +45,34 @@ primOps = \case
         return $ case (lhs, rhs) of
             (IntVal l, IntVal r) -> IntVal $ l + r
             (DoubleVal l, DoubleVal r) -> DoubleVal $ l + r
-            _ -> error "never come"
+            _ -> error $ "primOps: come `" <> show (lhs, rhs) <> "`, but it cannot."
     Sub -> do
         lhs <- getAccum
         rhs <- popStack
         return $ case (lhs, rhs) of
             (IntVal l, IntVal r) -> IntVal $ l - r
             (DoubleVal l, DoubleVal r) -> DoubleVal $ l - r
-            _ -> error "never come"
+            _ -> error $ "primOps: come `" <> show (lhs, rhs) <> "`, but it cannot."
     Mul -> do
         lhs <- getAccum
         rhs <- popStack
         return $ case (lhs, rhs) of
             (IntVal l, IntVal r) -> IntVal $ l * r
             (DoubleVal l, DoubleVal r) -> DoubleVal $ l * r
-            _ -> error "never come"
+            _ -> error $ "primOps: come `" <> show (lhs, rhs) <> "`, but it cannot."
     Div -> do
         lhs <- getAccum
         rhs <- popStack
         return $ case (lhs, rhs) of
             (IntVal l, IntVal r) -> IntVal $ l `div` r
             (DoubleVal l, DoubleVal r) -> DoubleVal $ l / r
-            _ -> error "never come"
+            _ -> error $ "primOps: come `" <> show (lhs, rhs) <> "`, but it cannot."
+    Mod -> do
+        lhs <- getAccum
+        rhs <- popStack
+        return $ case (lhs, rhs) of
+            (IntVal l, IntVal r) -> IntVal $ l `mod` r
+            _ -> error $ "primOps: come `" <> show (lhs, rhs) <> "`, but it cannot."
 
     Eq -> do
         lhs <- getAccum
@@ -76,35 +82,35 @@ primOps = \case
             (DoubleVal l, DoubleVal r) -> BoolVal $ l == r
             (BoolVal l, BoolVal r) -> BoolVal $ l == r
             (UnitVal, UnitVal) -> BoolVal True
-            _ -> error "never come"
+            _ -> error $ "primOps: come `" <> show (lhs, rhs) <> "`, but it cannot."
     Lt -> do
         lhs <- getAccum
         rhs <- popStack
         return $ case (lhs, rhs) of
             (IntVal l, IntVal r) -> BoolVal $ l < r
             (DoubleVal l, DoubleVal r) -> BoolVal $ l < r
-            _ -> error "never come"
+            _ -> error $ "primOps: come `" <> show (lhs, rhs) <> "`, but it cannot."
     Gt -> do
         lhs <- getAccum
         rhs <- popStack
         return $ case (lhs, rhs) of
             (IntVal l, IntVal r) -> BoolVal $ l > r
             (DoubleVal l, DoubleVal r) -> BoolVal $ l > r
-            _ -> error "never come"
+            _ -> error $ "primOps: come `" <> show (lhs, rhs) <> "`, but it cannot."
     Le -> do
         lhs <- getAccum
         rhs <- popStack
         return $ case (lhs, rhs) of
             (IntVal l, IntVal r) -> BoolVal $ l <= r
             (DoubleVal l, DoubleVal r) -> BoolVal $ l <= r
-            _ -> error "never come"
+            _ -> error $ "primOps: come `" <> show (lhs, rhs) <> "`, but it cannot."
     Ge -> do
         lhs <- getAccum
         rhs <- popStack
         return $ case (lhs, rhs) of
             (IntVal l, IntVal r) -> BoolVal $ l >= r
             (DoubleVal l, DoubleVal r) -> BoolVal $ l >= r
-            _ -> error "never come"
+            _ -> error $ "primOps: come `" <> show (lhs, rhs) <> "`, but it cannot."
     MkTuple len -> do
         elems <- replicateM len popStack
         return $ TupleVal $ V.fromListN len elems
@@ -112,7 +118,7 @@ primOps = \case
         tuple <- getAccum
         case tuple of
             TupleVal tuple' -> return $ tuple' V.! idx
-            _ -> error "never come"
+            _ -> error $ "primOps: come `" <> show tuple <> "`, but it cannot."
 
 runZAM :: (Code, Accum, Env, Stack, RetStack, Glbl) -> (Code, Accum, IM.IntMap Env, Stack, RetStack, Glbl)
 runZAM (c, a, e, s, r, g) =
