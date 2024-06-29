@@ -4,11 +4,8 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 
-name:           STLC-in-Haskell
+name:           STLC
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/STLC-in-Haskell#readme>
-homepage:       https://github.com/githubuser/STLC-in-Haskell#readme
-bug-reports:    https://github.com/githubuser/STLC-in-Haskell/issues
 author:         kakkak444
 maintainer:     kakkak444
 copyright:      2024 kakkak444
@@ -18,10 +15,6 @@ build-type:     Simple
 extra-source-files:
     README.md
     CHANGELOG.md
-
-source-repository head
-  type: git
-  location: https://github.com/githubuser/STLC-in-Haskell
 
 library
   exposed-modules:
@@ -36,7 +29,7 @@ library
       ZINC
       ZINCInterpreter
   other-modules:
-      Paths_STLC_in_Haskell
+      Paths_STLC
   hs-source-dirs:
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
@@ -47,32 +40,32 @@ library
     , vector ==0.13.*
   default-language: Haskell2010
 
-executable STLC-in-Haskell-exe
+executable STLC-exe
   main-is: Main.hs
   other-modules:
-      Paths_STLC_in_Haskell
+      Paths_STLC
   hs-source-dirs:
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      STLC-in-Haskell
+      STLC
     , base >=4.7 && <5
     , containers ==0.6.*
     , mtl ==2.3.*
     , vector ==0.13.*
   default-language: Haskell2010
 
-test-suite STLC-in-Haskell-test
+test-suite STLC-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
       CoreToZincSpec
-      Paths_STLC_in_Haskell
+      Paths_STLC
   hs-source-dirs:
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      STLC-in-Haskell
+      STLC
     , base >=4.7 && <5
     , containers ==0.6.*
     , hspec

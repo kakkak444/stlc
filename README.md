@@ -1,4 +1,4 @@
-# STLC-in-Haskell
+# STLC
 This is a programming language based on `STLC + Fix + Let Polymorphism`.
 
 # LICENSE

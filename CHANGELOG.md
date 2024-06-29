@@ -1,4 +1,4 @@
-# Changelog for `STLC-in-Haskell`
+# Changelog for `STLC`
 
 All notable changes to this project will be documented in this file.
 

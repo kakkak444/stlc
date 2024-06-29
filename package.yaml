@@ -1,6 +1,5 @@
-name:                STLC-in-Haskell
+name:                STLC
 version:             0.1.0.0
-github:              "githubuser/STLC-in-Haskell"
 license:             MIT
 author:              "kakkak444"
 copyright:           "2024 kakkak444"
@@ -16,7 +15,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/STLC-in-Haskell#readme>
+# description:         Please see the README on GitHub at <https://github.com/githubuser/STLC#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -39,7 +38,7 @@ library:
   source-dirs: src
 
 executables:
-  STLC-in-Haskell-exe:
+  STLC-exe:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -47,10 +46,10 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - STLC-in-Haskell
+    - STLC
 
 tests:
-  STLC-in-Haskell-test:
+  STLC-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -58,5 +57,5 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - STLC-in-Haskell
+    - STLC
     - hspec
