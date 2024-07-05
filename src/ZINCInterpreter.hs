@@ -13,6 +13,7 @@ module ZINCInterpreter
 import ZINC
 
 import qualified Data.IntMap.Strict as IM
+import qualified Data.IntSet as IS
 import qualified Data.Vector as V
 import Data.Maybe (fromJust)
 import Control.Monad.State.Strict
@@ -36,6 +37,9 @@ type RetStack = [Value]
 type Accum = Maybe Value
 
 type ZAMState a = State (Code, Accum, IM.IntMap Env, Stack, RetStack, Glbl) a
+
+threshold :: Int
+threshold = 100
 
 primOps :: PrimOp -> ZAMState Value
 primOps = \case
@@ -261,6 +265,8 @@ getEnvs = do
 
 newEnv :: Env -> ZAMState Int
 newEnv env = do
+    collectIf
+
     envs <- getEnvs
     let next = fst (IM.findMax envs) + 1
         envs' = IM.insert next env envs
@@ -346,3 +352,34 @@ takeInstruction = do
     (c, a, e, s, r, g) <- get
     put (tail c, a, e, s, r, g)
     return $ head c
+
+collectIf :: ZAMState ()
+collectIf = do
+    size <- IM.size <$> getEnvs
+    when (size > threshold) collectGarbage
+
+collectGarbage :: ZAMState ()
+collectGarbage = do
+    (_, a, e, s, r, g) <- get
+    let remains = IS.singleton 0
+               <> collectKeysA a
+               <> collectKeysE e
+               <> IS.unions (map collectKeys [s, r, g])
+    putEnvs $ IM.restrictKeys e remains
+
+collectKeysV :: Value -> IS.IntSet
+collectKeysV = \case
+    TupleVal tuple -> IS.unions $ V.map collectKeysV tuple
+    ClosVal _ (Just i) -> IS.singleton i
+    ClosVal _ Nothing -> IS.empty
+    _ -> IS.empty
+
+collectKeysA :: Accum -> IS.IntSet
+collectKeysA Nothing = IS.empty
+collectKeysA (Just acc) = collectKeysV acc
+
+collectKeysE :: IM.IntMap Env -> IS.IntSet
+collectKeysE = IS.unions . map collectKeys . IM.elems
+
+collectKeys :: [Value] -> IS.IntSet
+collectKeys = IS.unions . map collectKeysV
