@@ -66,7 +66,7 @@ spec = do
                 IntVal i -> i `shouldBe` 23
                 _ -> error "never come"
 
-        it "test mutual recursion" $ do
+        it "test mutual recursion (evenOdd)" $ do
             assertValidExpr evenOdd
             case runZAM'' evenOdd' of
                 BoolVal b -> b `shouldBe` True
