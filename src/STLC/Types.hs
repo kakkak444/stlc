@@ -2,14 +2,17 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE ExplicitForAll #-}
+{-# LANGUAGE DataKinds #-}
 
 module STLC.Types
     ( Id(..)
     , mkId
     , IdType(..)
+    , toRenamed, toUnRenamed
     , Literal(..)
     , mkLitInt, mkLitDouble, mkLitBool, mkLitUnit
     , Type(..), LitType(..)
+    , Scheme(..)
     ) where
 
 import Data.Coerce (coerce)
@@ -27,6 +30,12 @@ data IdType
 
 mkId :: forall (ty :: IdType). String -> Id ty
 mkId = coerce
+
+toRenamed :: Id 'Original -> Id 'Unique
+toRenamed = coerce
+
+toUnRenamed :: Id 'Unique -> Id 'Original
+toUnRenamed = coerce
 
 
 data Literal
@@ -53,8 +62,11 @@ data Type (ty :: IdType)
     = TyLit LitType
     | TyArrow (Type ty) (Type ty)
     | TyTuple [Type ty]
-    | TyForAll (Id ty)
     | TyVar (Id ty)
+    deriving (Show, Eq)
+
+data Scheme (ty :: IdType)
+    = ForAll [Id ty] (Type ty)
     deriving (Show, Eq)
 
 data LitType

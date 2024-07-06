@@ -12,7 +12,6 @@ module Rename
 import STLC.Types
 import STLC.Expr
 
-import Data.Coerce (coerce)
 import Control.Monad.State.Strict
 import Control.Monad.Reader
 
@@ -87,9 +86,3 @@ freshize x = do
 
 increment :: Renamer ()
 increment = modify' (+1)
-
-toRenamed :: Id 'Original -> Id 'Unique
-toRenamed = coerce
-
-toUnRenamed :: Id 'Unique -> Id 'Original
-toUnRenamed = coerce
