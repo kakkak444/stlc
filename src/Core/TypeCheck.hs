@@ -55,7 +55,7 @@ getType = \case
     Fix e -> do
         te <- getType e
         case te of
-            TyArrow te1 te2
+            TyArrow te1@(TyArrow _ _) te2@(TyArrow _ _)
                 | te1 == te2 -> return te1
             _ -> throwError ()
     Tuple xs -> do
