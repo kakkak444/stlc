@@ -51,7 +51,7 @@ ren = \case
     If cond e1 e2 -> If <$> ren cond <*> ren e1 <*> ren e2
     Fix e -> Fix <$> ren e
     Tuple tuple -> Tuple <$> mapM ren tuple
-    TupleNthElem e i -> TupleNthElem <$> ren e <*> pure i
+    TupleNthElem e i l -> TupleNthElem <$> ren e <*> pure i <*> pure l
 
 subst :: Id 'Original -> Id 'Unique -> Expr 'None -> Expr 'None
 subst before after = \case
@@ -63,7 +63,7 @@ subst before after = \case
     If cond e1 e2 -> If (subst before after cond) (subst before after e1) (subst before after e2)
     Fix e -> Fix $ subst before after e
     Tuple tuple -> Tuple $ map (subst before after) tuple
-    TupleNthElem e i -> TupleNthElem (subst before after e) i
+    TupleNthElem e i l -> TupleNthElem (subst before after e) i l
 
 getNewNum :: Renamer Int
 getNewNum = do

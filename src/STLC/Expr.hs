@@ -18,7 +18,7 @@ data Expr (p :: Phase)
     | If (Expr p) (Expr p) (Expr p)
     | Fix (Expr p)
     | Tuple [Expr p]
-    | TupleNthElem (Expr p) Int
+    | TupleNthElem (Expr p) Int Int
     deriving (Show)
 
 data Phase

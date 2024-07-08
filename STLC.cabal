@@ -23,11 +23,11 @@ library
       Core.TypeCheck
       Core.Types
       CoreToZINC
-      InferType
       Lib
       Rename
       STLC.Expr
       STLC.Types
+      TypeInference
       ZINC
       ZINCInterpreter
   other-modules:
@@ -62,6 +62,7 @@ test-suite STLC-test
   main-is: Spec.hs
   other-modules:
       CoreToZincSpec
+      StlcTypeInference
       Paths_STLC
   hs-source-dirs:
       test
