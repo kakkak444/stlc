@@ -61,23 +61,23 @@ evenOdd =
         ) ( Let (
                 mkId "evenOdd'",
                 Tuple
-                    [ Lam (mkId "evenOdd0") (
-                        Lam (mkId "n0") (
-                            If ( (s2v "==" `App` s2v "n0") `App` i2l 0 )
+                    [ Lam (mkId "evenOdd") (
+                        Lam (mkId "n") (
+                            If ( (s2v "==" `App` s2v "n") `App` i2l 0 )
                             ( b2l True )
-                            ( If ( (s2v "==" `App` s2v "n0") `App` i2l 1 )
+                            ( If ( (s2v "==" `App` s2v "n") `App` i2l 1 )
                               ( b2l False )
-                              ( TupleNthElem (s2v "evenOdd0") 1 2 `App` ( (s2v "-" `App` s2v "n0") `App` i2l 1 ) )
+                              ( TupleNthElem (s2v "evenOdd") 1 2 `App` ( (s2v "-" `App` s2v "n") `App` i2l 1 ) )
                             )
                         )
                     )
-                    , Lam (mkId "evenOdd1") (
-                        Lam (mkId "n1") (
-                            If ( (s2v "==" `App` s2v "n1") `App` i2l 0 )
+                    , Lam (mkId "evenOdd") (
+                        Lam (mkId "n") (
+                            If ( (s2v "==" `App` s2v "n") `App` i2l 0 )
                             ( b2l False )
-                            ( If ( (s2v "==" `App` s2v "n1") `App` i2l 1 )
+                            ( If ( (s2v "==" `App` s2v "n") `App` i2l 1 )
                               ( b2l True )
-                              ( TupleNthElem (s2v "evenOdd1") 0 2 `App` ( (s2v "-" `App` s2v "n1") `App` i2l 1 ) )
+                              ( TupleNthElem (s2v "evenOdd") 0 2 `App` ( (s2v "-" `App` s2v "n") `App` i2l 1 ) )
                             )
                         )
                     )
@@ -97,7 +97,7 @@ evenOdd =
     )
 
 
-infer' :: Expr 'None -> Either String (Scheme 'Unique)
+infer' :: Expr 'None -> Either String (Scheme 'Unique, TEnv)
 infer' expr =
     let expr' = rename fv expr
     in
@@ -107,7 +107,7 @@ assertTypes :: Expr 'None -> Scheme 'Unique -> Expectation
 assertTypes expr t =
     let res = infer' expr
     in
-        res `shouldBe` Right t
+        fst <$> res `shouldBe` Right t
 
 -- schemeEqual :: Scheme 'Unique -> Scheme 'Unique -> Bool
 -- schemeEqual = _
