@@ -2,7 +2,6 @@
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE LambdaCase #-}
 
 module TypeInference
     ( infer
@@ -19,7 +18,7 @@ import STLC.Types
 import STLC.Expr
 
 import Data.Coerce (coerce)
-import Data.Bifunctor (first, second, Bifunctor (first))
+import Data.Bifunctor (first, second)
 import Control.Monad
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
@@ -29,7 +28,7 @@ import Control.Monad.Except
 type TVar a = Id a
 
 type Subst = M.Map (TVar 'Unique) (Type 'Unique)
-newtype TEnv = TEnv (M.Map (TVar 'Unique) (Scheme 'Unique))
+newtype TEnv = TEnv { unTEnv :: M.Map (TVar 'Unique) (Scheme 'Unique) }
     deriving (Show, Eq)
 
 newtype Inferer a = Inferer (StateT (TEnv, Int) (Except String) a)
@@ -92,14 +91,14 @@ inferExpr expr = getTEnv >>= \tenv -> case expr of
     Lam x e -> do
         tv <- freshTyVar
         let env' = extendTEnv tenv x $ ForAll [] tv
-        (s1, t1) <- putTEnv env' >> inferExpr e
+        (s1, t1) <- pushTEnv env' >> inferExpr e
 
         updateTEnv s1
         return (s1, TyArrow (apply s1 tv) t1)
     App e1 e2 -> do
         tv <- freshTyVar
         (s1, t1) <- inferExpr e1
-        (s2, t2) <- putTEnv (apply s1 tenv) >> inferExpr e2
+        (s2, t2) <- pushTEnv (apply s1 tenv) >> inferExpr e2
         s3 <- unify (apply s2 t1) (TyArrow t2 tv)
 
         updateTEnv $ s3 `compose` s2 `compose` s1
@@ -108,7 +107,7 @@ inferExpr expr = getTEnv >>= \tenv -> case expr of
         (s1, t1) <- inferExpr e1
         let env' = apply s1 tenv
             t'   = generalise env' t1
-        (s2, t2) <- putTEnv (extendTEnv env' x t') >> inferExpr e2
+        (s2, t2) <- pushTEnv (extendTEnv env' x t') >> inferExpr e2
 
         updateTEnv $ s1 `compose` s2
         return (s1 `compose` s2, t2)
@@ -135,7 +134,7 @@ inferExpr expr = getTEnv >>= \tenv -> case expr of
         tvars <- replicateM len freshTyVar
         (s, ts, _tenv') <- foldM (
             \(s, t, tenv_) e -> do
-                (s', t') <- putTEnv tenv_ >> inferExpr e
+                (s', t') <- pushTEnv tenv_ >> inferExpr e
                 return (compose s' s, t ++ [t'], apply s' tenv_)
             ) (nullSubst, [], tenv) tuple
         s' <- foldl compose nullSubst <$> zipWithM unify ts tvars
@@ -153,7 +152,6 @@ inferExpr expr = getTEnv >>= \tenv -> case expr of
             TyTuple ts
                 | length ts == l -> updateTEnv s'' >> return (s'', ts !! i)
             other -> throwError $ "type mismatch `" <> show other <> "`"
-    -- e -> fail $ "not implemented yet `" <> show e <> "`"
 
 inferLit :: TEnv -> Literal -> Inferer (Subst, Type 'Unique)
 inferLit _tenv lit = return
@@ -251,8 +249,8 @@ increment = modify' $ second (+1)
 getTEnv :: Inferer TEnv
 getTEnv = fst <$> get
 
-putTEnv :: TEnv -> Inferer ()
-putTEnv tenv = modify' $ first (const tenv)
+pushTEnv :: TEnv -> Inferer ()
+pushTEnv (TEnv tenv) = modify' $ first (TEnv . M.union tenv . unTEnv)
 
 updateTEnv :: Subst -> Inferer ()
 updateTEnv subst = modify $ first (apply subst)
